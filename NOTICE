@@ -1,0 +1,20 @@
+This software includes derivative work based on the repository:
+
+  AWSSecretsManagerConfigurationExtensions
+  https://github.com/Kralizek/AWSSecretsManagerConfigurationExtensions
+
+Originally created and maintained by Renato Golia.
+Licensed under the MIT License.
+
+---
+
+Modifications in this repository include (but are not limited to):
+
+- Refactoring for project structure and naming
+- Updates to support AWS SDK v4 and .NET 9
+- Packaging and publishing under a new NuGet ID
+- Enhancements for modern configuration patterns and extensibility
+
+---
+
+The original LICENSE file from the upstream repository is included in this distribution in the licenses/ folder to comply with MIT License requirements.
