@@ -97,7 +97,7 @@ dotnet test
 
 ## 🙌 Acknowledgments
 
-This project is based on the excellent work by [Daniele Kralizek](https://github.com/Kralizek) and inspired by the broader .NET and AWS developer community.
+This project is based on the excellent work by [Renato Golia](https://github.com/Kralizek) and inspired by the broader .NET and AWS developer community.
 
 ---
 
