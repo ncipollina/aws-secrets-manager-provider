@@ -1,6 +1,6 @@
 using System;
 
-namespace Aws.SecretsManager.Provider.Internal;
+namespace AWSSecretsManager.Provider.Internal;
 
 public class MissingSecretValueException : Exception
 {

@@ -1,7 +1,7 @@
 ﻿using System;
 
 using Amazon;
-using Aws.SecretsManager.Provider;
+using AWSSecretsManager.Provider;
 using Microsoft.Extensions.Configuration;
 
 var builder = new ConfigurationBuilder();

@@ -7,7 +7,7 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Aws.SecretsManager.Provider\Aws.SecretsManager.Provider.csproj" />
+    <ProjectReference Include="..\..\src\AWSSecretsManager.Provider\AWSSecretsManager.Provider.csproj" />
   </ItemGroup>
 
 </Project>

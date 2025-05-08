@@ -9,7 +9,7 @@ using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Microsoft.Extensions.Configuration;
 
-namespace Aws.SecretsManager.Provider.Internal;
+namespace AWSSecretsManager.Provider.Internal;
 
 public class SecretsManagerConfigurationProvider : ConfigurationProvider, IDisposable
 {

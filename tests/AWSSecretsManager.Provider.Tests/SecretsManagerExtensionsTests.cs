@@ -1,12 +1,12 @@
 using System;
 using Amazon;
 using Amazon.Runtime;
-using Aws.SecretsManager.Provider.Internal;
+using AWSSecretsManager.Provider.Internal;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using NUnit.Framework;
 
-namespace Aws.SecretsManager.Provider.Tests;
+namespace AWSSecretsManager.Provider.Tests;
 
 [TestFixture]
 [TestOf(typeof(SecretsManagerExtensions))]

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 
-namespace Aws.SecretsManager.Provider.Internal;
+namespace AWSSecretsManager.Provider.Internal;
 
 public class SecretsManagerConfigurationProviderOptions
 {

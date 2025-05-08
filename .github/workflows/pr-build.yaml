@@ -9,7 +9,7 @@ jobs:
   build:
     uses: ncipollina/devops-templates/.github/workflows/pr-build.yaml@v3.2
     with:
-      solution: SecretsManager.sln
+      solution: AWSSecretsManager.sln
       hasTests: true
       dotnetVersion: |
         8.0.x

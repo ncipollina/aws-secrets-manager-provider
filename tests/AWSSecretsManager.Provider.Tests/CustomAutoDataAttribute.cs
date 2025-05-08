@@ -6,9 +6,9 @@ using Amazon.SecretsManager.Model;
 using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoFixture.NUnit3;
-using Aws.SecretsManager.Provider.Internal;
+using AWSSecretsManager.Provider.Internal;
 
-namespace Aws.SecretsManager.Provider.Tests;
+namespace AWSSecretsManager.Provider.Tests;
 
 [AttributeUsage(AttributeTargets.Method)]
 public class CustomAutoDataAttribute : AutoDataAttribute

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using NUnit.Framework;
 
-namespace Aws.SecretsManager.Provider.Tests;
+namespace AWSSecretsManager.Provider.Tests;
 
 public static class ConfigurationProviderExtensions
 {

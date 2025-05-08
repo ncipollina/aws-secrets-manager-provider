@@ -1,10 +1,10 @@
 using System;
 using Amazon;
 using Amazon.Runtime;
-using Aws.SecretsManager.Provider.Internal;
+using AWSSecretsManager.Provider.Internal;
 using Microsoft.Extensions.Configuration;
 
-namespace Aws.SecretsManager.Provider;
+namespace AWSSecretsManager.Provider;
 
 public static class SecretsManagerExtensions
 {

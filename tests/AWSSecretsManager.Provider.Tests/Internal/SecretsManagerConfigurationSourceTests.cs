@@ -1,12 +1,12 @@
 using System;
 using Amazon.Runtime;
 using Amazon.SecretsManager;
-using Aws.SecretsManager.Provider.Internal;
+using AWSSecretsManager.Provider.Internal;
 using Microsoft.Extensions.Configuration;
 using Moq;
 using NUnit.Framework;
 
-namespace Aws.SecretsManager.Provider.Tests.Internal;
+namespace AWSSecretsManager.Provider.Tests.Internal;
 
 [TestFixture]
 [TestOf(typeof(SecretsManagerConfigurationSource))]
@@ -30,7 +30,8 @@ public class SecretsManagerConfigurationSourceTests
     }
 
     [Test, CustomAutoData]
-    public void Build_can_create_a_IConfigurationProvider_with_credentials(AWSCredentials credentials, IConfigurationBuilder configurationBuilder)
+    public void Build_can_create_a_IConfigurationProvider_with_credentials(AWSCredentials credentials,
+        IConfigurationBuilder configurationBuilder)
     {
         var sut = new SecretsManagerConfigurationSource(credentials);
 
@@ -41,7 +42,8 @@ public class SecretsManagerConfigurationSourceTests
     }
 
     [Test, CustomAutoData]
-    public void Build_can_create_a_IConfigurationProvider_with_options(SecretsManagerConfigurationProviderOptions options, IConfigurationBuilder configurationBuilder)
+    public void Build_can_create_a_IConfigurationProvider_with_options(
+        SecretsManagerConfigurationProviderOptions options, IConfigurationBuilder configurationBuilder)
     {
         var sut = new SecretsManagerConfigurationSource(options: options);
 
@@ -52,7 +54,8 @@ public class SecretsManagerConfigurationSourceTests
     }
 
     [Test, CustomAutoData]
-    public void Build_invokes_config_client_method(IConfigurationBuilder configurationBuilder, Action<AmazonSecretsManagerConfig> secretsManagerConfiguration)
+    public void Build_invokes_config_client_method(IConfigurationBuilder configurationBuilder,
+        Action<AmazonSecretsManagerConfig> secretsManagerConfiguration)
     {
         var options = new SecretsManagerConfigurationProviderOptions
         {
@@ -63,11 +66,13 @@ public class SecretsManagerConfigurationSourceTests
 
         var provider = sut.Build(configurationBuilder);
 
-        Mock.Get(secretsManagerConfiguration).Verify(p => p(It.Is<AmazonSecretsManagerConfig>(c => c != null)), Times.Once());
+        Mock.Get(secretsManagerConfiguration)
+            .Verify(p => p(It.Is<AmazonSecretsManagerConfig>(c => c != null)), Times.Once());
     }
 
     [Test, CustomAutoData]
-    public void Build_uses_given_client_factory_method(IConfigurationBuilder configurationBuilder, SecretsManagerConfigurationProviderOptions options, Func<IAmazonSecretsManager> clientFactory)
+    public void Build_uses_given_client_factory_method(IConfigurationBuilder configurationBuilder,
+        SecretsManagerConfigurationProviderOptions options, Func<IAmazonSecretsManager> clientFactory)
     {
         options.CreateClient = clientFactory;
 

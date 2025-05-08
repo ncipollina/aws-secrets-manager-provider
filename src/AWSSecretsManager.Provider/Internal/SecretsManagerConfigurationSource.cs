@@ -3,7 +3,7 @@ using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Microsoft.Extensions.Configuration;
 
-namespace Aws.SecretsManager.Provider.Internal;
+namespace AWSSecretsManager.Provider.Internal;
 
 public class SecretsManagerConfigurationSource : IConfigurationSource
 {

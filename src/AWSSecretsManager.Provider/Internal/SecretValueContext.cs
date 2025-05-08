@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Amazon.SecretsManager.Model;
 
-namespace Aws.SecretsManager.Provider.Internal;
+namespace AWSSecretsManager.Provider.Internal;
 
 /// <summary>
 /// A secret context when making a request to get a secret value.

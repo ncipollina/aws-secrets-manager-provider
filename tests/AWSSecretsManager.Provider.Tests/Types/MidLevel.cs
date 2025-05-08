@@ -1,4 +1,4 @@
-﻿namespace Aws.SecretsManager.Provider.Tests.Types;
+﻿namespace AWSSecretsManager.Provider.Tests.Types;
 
 public class MidLevel
 {

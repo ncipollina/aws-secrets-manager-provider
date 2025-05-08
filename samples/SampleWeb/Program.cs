@@ -1,4 +1,4 @@
-using Aws.SecretsManager.Provider;
+using AWSSecretsManager.Provider;
 
 var builder = WebApplication.CreateBuilder(args);
 
