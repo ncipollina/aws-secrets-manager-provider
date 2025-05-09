@@ -1,6 +1,6 @@
-# Aws.SecretsManager.Provider
-[![NuGet version](https://img.shields.io/nuget/vpre/Aws.SecretsManager.Provider.svg)](https://www.nuget.org/packages/Aws.SecretsManager.Provider)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/Aws.SecretsManager.Provider.svg)](https://www.nuget.org/packages/Aws.SecretsManager.Provider/)
+# AWSSecretsManager.Provider
+[![NuGet version](https://img.shields.io/nuget/vpre/AWSSecretsManager.Provider.svg)](https://www.nuget.org/packages/AWSSecretsManager.Provider)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/AWSSecretsManager.Provider.svg)](https://www.nuget.org/packages/AWSSecretsManager.Provider/)
 [![Build Status](https://github.com/ncipollina/aws-secrets-manager-provider/actions/workflows/build.yaml/badge.svg)](https://github.com/ncipollina/aws-secrets-manager-provider/actions)
 
 This is a modern, community-maintained fork of [Kralizek/AWSSecretsManagerConfigurationExtensions](https://github.com/Kralizek/AWSSecretsManagerConfigurationExtensions), originally developed by Renato Golia.
