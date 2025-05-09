@@ -14,7 +14,7 @@ It provides a configuration provider for [Microsoft.Extensions.Configuration](ht
 - ✅ Targeted to .NET 8 and .NET 9
 - ✅ Converted to use `System.Text.Json` only
 - ✅ Refactored structure for better modern SDK usage
-- ✅ Published as a new NuGet package: [`Aws.SecretsManager.Provider`](https://www.nuget.org/packages/Aws.SecretsManager.Provider)
+- ✅ Published as a new NuGet package: [`AWSSecretsManager.Provider`](https://www.nuget.org/packages/AWSSecretsManager.Provider)
 
 ---
 
