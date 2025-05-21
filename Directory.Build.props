@@ -5,10 +5,10 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
         <!-- Other useful metadata -->
-        <RepositoryUrl>https://github.com/ncipollina/aws-secrets-manager-provider</RepositoryUrl>
+        <RepositoryUrl>https://github.com/LayeredCraft/aws-secrets-manager-provider</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <Authors>Nick Cipollina</Authors>
-        <PackageProjectUrl>https://github.com/ncipollina/aws-secrets-manager-provider</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/LayeredCraft/aws-secrets-manager-provider</PackageProjectUrl>
     </PropertyGroup>
 
 </Project>
