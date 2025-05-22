@@ -1,0 +1,26 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "ncipollina",
+      "name": "Nick Cipollina",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1405469?v=4",
+      "profile": "https://github.com/ncipollina",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "aws-secrets-manager-provider",
+  "projectOwner": "LayeredCraft"
+}
