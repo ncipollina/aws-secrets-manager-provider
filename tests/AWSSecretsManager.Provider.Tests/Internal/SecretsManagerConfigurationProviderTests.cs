@@ -10,7 +10,7 @@ using AutoFixture.Xunit3;
 using AWSSecretsManager.Provider.Internal;
 using AWSSecretsManager.Provider.Tests.Types;
 using NSubstitute;
-using Newtonsoft.Json;
+using System.Text.Json;
 using Xunit;
 using AwesomeAssertions;
 using NSubstitute.ExceptionExtensions;
@@ -41,7 +41,7 @@ public class SecretsManagerConfigurationProviderTests
         SecretsManagerConfigurationProvider sut, IFixture fixture)
     {
         var getSecretValueResponse = fixture.Build<GetSecretValueResponse>()
-            .With(p => p.SecretString, JsonConvert.SerializeObject(test))
+            .With(p => p.SecretString, JsonSerializer.Serialize(test))
             .Without(p => p.SecretBinary)
             .Create();
 
@@ -66,7 +66,7 @@ public class SecretsManagerConfigurationProviderTests
         [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut, IFixture fixture)
     {
         var getSecretValueResponse = fixture.Build<GetSecretValueResponse>()
-            .With(p => p.SecretString, JsonConvert.SerializeObject(test))
+            .With(p => p.SecretString, JsonSerializer.Serialize(test))
             .Without(p => p.SecretBinary)
             .Create();
 
@@ -90,7 +90,7 @@ public class SecretsManagerConfigurationProviderTests
         [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut, IFixture fixture)
     {
         var getSecretValueResponse = fixture.Build<GetSecretValueResponse>()
-            .With(p => p.SecretString, JsonConvert.SerializeObject(test))
+            .With(p => p.SecretString, JsonSerializer.Serialize(test))
             .Without(p => p.SecretBinary)
             .Create();
 
@@ -445,7 +445,7 @@ public class SecretsManagerConfigurationProviderTests
         ListSecretsResponse listSecretsResponse, RootObject test, [Frozen] IAmazonSecretsManager secretsManager,
         SecretsManagerConfigurationProvider sut, IFixture fixture)
     {
-        var secretString = " " + JsonConvert.SerializeObject(test);
+        var secretString = " " + JsonSerializer.Serialize(test);
 
         var getSecretValueResponse = fixture.Build<GetSecretValueResponse>()
             .With(p => p.SecretString, secretString)
