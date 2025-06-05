@@ -62,7 +62,7 @@ public class SecretsManagerConfigurationSourceTests
 
         var sut = new SecretsManagerConfigurationSource(options: options);
 
-        var provider = sut.Build(configurationBuilder);
+        sut.Build(configurationBuilder);
 
         secretsManagerConfiguration.Received(1)(Arg.Is<AmazonSecretsManagerConfig>(c => c != null));
     }
