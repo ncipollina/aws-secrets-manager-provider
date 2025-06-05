@@ -3,7 +3,6 @@ using Amazon;
 using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace AWSSecretsManager.Provider.Internal;
@@ -26,14 +25,8 @@ public class SecretsManagerConfigurationSource : IConfigurationSource
     {
         var client = CreateClient();
         
-        // Try to resolve logger from the builder's properties (if available)
-        ILogger? logger = null;
-        if (builder.Properties.TryGetValue("Services", out var servicesObj) && servicesObj is IServiceProvider services)
-        {
-            logger = services.GetService<ILogger<SecretsManagerConfigurationProvider>>();
-        }
-
-        return new SecretsManagerConfigurationProvider(client, Options, logger);
+        // No automatic logger resolution - use explicit logger overloads if logging is needed
+        return new SecretsManagerConfigurationProvider(client, Options, logger: null);
     }
 
     private IAmazonSecretsManager CreateClient()

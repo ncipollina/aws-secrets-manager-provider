@@ -84,6 +84,11 @@ public class SecretsManagerConfigurationProvider : ConfigurationProvider, IDispo
                 _logger?.LogTrace("Polling for secret changes");
                 await ReloadAsync(cancellationToken).ConfigureAwait(false);
             }
+            catch (OperationCanceledException)
+            {
+                // Expected during shutdown - break without logging
+                break;
+            }
             catch (Exception ex)
             {
                 _logger?.LogWarning(ex, "Error during secret polling, will retry in {PollingInterval}", interval);
