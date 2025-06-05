@@ -7,6 +7,7 @@ using AutoFixture;
 using AutoFixture.AutoMoq;
 using AutoFixture.NUnit3;
 using AWSSecretsManager.Provider.Internal;
+using Microsoft.Extensions.Logging;
 
 namespace AWSSecretsManager.Provider.Tests;
 
@@ -55,6 +56,11 @@ public static class FixtureHelpers
         fixture.Customize<GetSecretValueResponse>(o => o
             .With(p => p.SecretString)
             .Without(p => p.SecretBinary));
+
+        // Configure SecretsManagerConfigurationProvider to use null logger by default in tests
+        fixture.Customize<SecretsManagerConfigurationProvider>(c => 
+            c.FromFactory((Amazon.SecretsManager.IAmazonSecretsManager client, SecretsManagerConfigurationProviderOptions options) =>
+                new SecretsManagerConfigurationProvider(client, options, null)));
 
         return fixture;
     }

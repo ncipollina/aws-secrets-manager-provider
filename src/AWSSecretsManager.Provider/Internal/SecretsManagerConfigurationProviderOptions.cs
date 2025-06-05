@@ -133,4 +133,5 @@ public class SecretsManagerConfigurationProviderOptions
     /// </code>
     /// </example>
     public bool IgnoreMissingValues { get; set; }
+
 }

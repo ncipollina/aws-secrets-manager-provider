@@ -17,6 +17,7 @@ It provides a configuration provider for [Microsoft.Extensions.Configuration](ht
 - ✅ Targeted to .NET 8 and .NET 9
 - ✅ Converted to use `System.Text.Json` only
 - ✅ Refactored structure for better modern SDK usage
+- ✅ **NEW**: Comprehensive logging support with `ILogger` integration
 - ✅ Published as a new NuGet package: [`AWSSecretsManager.Provider`](https://www.nuget.org/packages/AWSSecretsManager.Provider)
 
 ---
@@ -62,6 +63,39 @@ static void Main(string[] args)
 Your application must have AWS credentials available through the default AWS SDK mechanisms. Learn more here:  
 👉 [AWS SDK Credential Config](https://docs.aws.amazon.com/sdk-for-net/v3/developer-guide/net-dg-config-creds.html)
 
+### 📋 Logging Support
+
+The provider includes comprehensive logging support for better observability:
+
+```csharp
+// Using ILoggerFactory (recommended)
+using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+builder.Configuration.AddSecretsManager(
+    loggerFactory,
+    configurator: options => options.PollingInterval = TimeSpan.FromMinutes(5));
+
+// Using explicit ILogger
+var logger = loggerFactory.CreateLogger<SecretsManagerConfigurationProvider>();
+builder.Configuration.AddSecretsManager(
+    logger,
+    configurator: options => options.PollingInterval = TimeSpan.FromMinutes(5));
+```
+
+**Log Levels:**
+- **Information**: Key operations (loading, reloading, polling status)
+- **Debug**: Batch processing details and secret counts  
+- **Trace**: Individual secret processing and change detection
+- **Warning**: Polling errors and missing secrets (when ignored)
+- **Error**: Failed operations with full context
+
+**Example Log Output:**
+```
+[Information] Loading secrets from AWS Secrets Manager
+[Debug] Fetching 15 secrets in 1 batches
+[Information] Successfully loaded 47 configuration keys in 1,234ms
+[Information] Starting secret polling with interval 00:05:00
+```
+
 ---
 
 ## 🔒 Configuration Options
@@ -73,6 +107,7 @@ This provider supports several customization options, including:
 - **Filtering**: Control which secrets are loaded via filters or explicit allow lists.
 - **Key generation**: Customize how configuration keys are named.
 - **Version stage**: Set version stages for secrets.
+- **Logging**: Full logging support with `ILogger` integration for observability.
 - **LocalStack support**: Override `ServiceUrl` for local testing.
 
 Refer to [samples](/samples/) for examples of each option.
@@ -82,7 +117,7 @@ Refer to [samples](/samples/) for examples of each option.
 ## 📦 Installation
 
 ```bash
-dotnet add package Aws.SecretsManager.Provider
+dotnet add package AWSSecretsManager.Provider
 ```
 
 ---
