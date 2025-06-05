@@ -33,6 +33,10 @@ public class SecretsManagerConfigurationProvider : ConfigurationProvider, IDispo
 
     public override void Load()
     {
+        // Note: Using GetAwaiter().GetResult() is required here because the ConfigurationProvider.Load()
+        // method must be synchronous, but AWS SDK operations are async-only. This follows the same
+        // pattern used by other configuration providers that integrate with async-only services.
+        // The ConfigureAwait(false) helps prevent deadlocks in synchronization contexts.
         _logger?.LogInformation("Loading secrets from AWS Secrets Manager");
         var stopwatch = Stopwatch.StartNew();
         
