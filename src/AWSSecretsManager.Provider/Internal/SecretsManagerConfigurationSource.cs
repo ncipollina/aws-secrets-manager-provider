@@ -61,27 +61,32 @@ public class SecretsManagerConfigurationSource : IConfigurationSource
 /// <summary>
 /// Configuration source that supports explicit logger injection
 /// </summary>
-public class SecretsManagerConfigurationSourceWithLogger : SecretsManagerConfigurationSource
+public class SecretsManagerConfigurationSourceWithLogger : IConfigurationSource
 {
+    private readonly AWSCredentials? _credentials;
+    private readonly SecretsManagerConfigurationProviderOptions _options;
     private readonly ILogger _logger;
     
-    public SecretsManagerConfigurationSourceWithLogger(AWSCredentials? credentials, SecretsManagerConfigurationProviderOptions options, ILogger logger) 
-        : base(credentials, options)
+    public RegionEndpoint? Region { get; set; }
+    
+    public SecretsManagerConfigurationSourceWithLogger(AWSCredentials? credentials, SecretsManagerConfigurationProviderOptions options, ILogger logger)
     {
+        _credentials = credentials;
+        _options = options ?? throw new ArgumentNullException(nameof(options));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public new IConfigurationProvider Build(IConfigurationBuilder builder)
+    public IConfigurationProvider Build(IConfigurationBuilder builder)
     {
         var client = CreateClient();
-        return new SecretsManagerConfigurationProvider(client, Options, _logger);
+        return new SecretsManagerConfigurationProvider(client, _options, _logger);
     }
 
     private IAmazonSecretsManager CreateClient()
     {
-        if (Options.CreateClient != null)
+        if (_options.CreateClient != null)
         {
-            return Options.CreateClient();
+            return _options.CreateClient();
         }
 
         var clientConfig = new AmazonSecretsManagerConfig
@@ -89,12 +94,12 @@ public class SecretsManagerConfigurationSourceWithLogger : SecretsManagerConfigu
             RegionEndpoint = Region
         };
 
-        Options.ConfigureSecretsManagerConfig(clientConfig);
+        _options.ConfigureSecretsManagerConfig(clientConfig);
 
-        return Credentials switch
+        return _credentials switch
         {
             null => new AmazonSecretsManagerClient(clientConfig),
-            _ => new AmazonSecretsManagerClient(Credentials, clientConfig)
+            _ => new AmazonSecretsManagerClient(_credentials, clientConfig)
         };
     }
 }

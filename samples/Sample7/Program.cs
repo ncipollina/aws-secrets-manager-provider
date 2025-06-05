@@ -40,10 +40,14 @@ Console.WriteLine($"Configuration has {configuration.AsEnumerable().Count()} key
 Console.WriteLine("Check the console output above for AWS Secrets Manager logs.");
 
 // Force a manual reload to see reload logs
-if (configBuilder.Sources.FirstOrDefault() is AWSSecretsManager.Provider.Internal.SecretsManagerConfigurationSource source)
+Console.WriteLine("\\nTriggering manual reload...");
+var secretsManagerSource = configBuilder.Sources
+    .OfType<AWSSecretsManager.Provider.Internal.SecretsManagerConfigurationSourceWithLogger>()
+    .FirstOrDefault();
+
+if (secretsManagerSource != null)
 {
-    var provider = source.Build(configBuilder) as AWSSecretsManager.Provider.Internal.SecretsManagerConfigurationProvider;
-    Console.WriteLine("\\nTriggering manual reload...");
+    var provider = secretsManagerSource.Build(configBuilder) as AWSSecretsManager.Provider.Internal.SecretsManagerConfigurationProvider;
     try
     {
         await provider?.ForceReloadAsync(CancellationToken.None)!;
@@ -53,6 +57,10 @@ if (configBuilder.Sources.FirstOrDefault() is AWSSecretsManager.Provider.Interna
     {
         Console.WriteLine($"Manual reload failed (expected in demo): {ex.Message}");
     }
+}
+else
+{
+    Console.WriteLine("No SecretsManager configuration source found for manual reload demo.");
 }
 
 Console.WriteLine("\\nDemo completed. Press any key to exit...");
