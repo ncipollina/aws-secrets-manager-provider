@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
@@ -8,6 +9,7 @@ using Amazon.Runtime;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace AWSSecretsManager.Provider.Internal;
 
@@ -17,20 +19,38 @@ public class SecretsManagerConfigurationProvider : ConfigurationProvider, IDispo
 
     public IAmazonSecretsManager Client { get; }
 
+    private readonly ILogger? _logger;
     private HashSet<(string, string)> _loadedValues = new();
     private Task? _pollingTask;
     private CancellationTokenSource? _cancellationToken;
 
-    public SecretsManagerConfigurationProvider(IAmazonSecretsManager client, SecretsManagerConfigurationProviderOptions options)
+    public SecretsManagerConfigurationProvider(IAmazonSecretsManager client, SecretsManagerConfigurationProviderOptions options, ILogger? logger = null)
     {
         Options = options ?? throw new ArgumentNullException(nameof(options));
-
         Client = client ?? throw new ArgumentNullException(nameof(client));
+        _logger = logger;
     }
 
     public override void Load()
     {
-        LoadAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+        // Note: Using GetAwaiter().GetResult() is required here because the ConfigurationProvider.Load()
+        // method must be synchronous, but AWS SDK operations are async-only. This follows the same
+        // pattern used by other configuration providers that integrate with async-only services.
+        // The ConfigureAwait(false) helps prevent deadlocks in synchronization contexts.
+        _logger?.LogInformation("Loading secrets from AWS Secrets Manager");
+        var stopwatch = Stopwatch.StartNew();
+        
+        try
+        {
+            LoadAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            _logger?.LogInformation("Successfully loaded {SecretCount} configuration keys in {ElapsedMs}ms", 
+                Data.Count, stopwatch.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Failed to load secrets from AWS Secrets Manager");
+            throw;
+        }
     }
 
     public Task ForceReloadAsync(CancellationToken cancellationToken)
@@ -58,21 +78,33 @@ public class SecretsManagerConfigurationProvider : ConfigurationProvider, IDispo
 
     private async Task PollForChangesAsync(TimeSpan interval, CancellationToken cancellationToken)
     {
+        _logger?.LogInformation("Starting secret polling with interval {PollingInterval}", interval);
+        
         while (!cancellationToken.IsCancellationRequested)
         {
             await Task.Delay(interval, cancellationToken).ConfigureAwait(false);
             try
             {
+                _logger?.LogTrace("Polling for secret changes");
                 await ReloadAsync(cancellationToken).ConfigureAwait(false);
             }
-            catch (Exception)
+            catch (OperationCanceledException)
             {
+                // Expected during shutdown - break without logging
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Error during secret polling, will retry in {PollingInterval}", interval);
             }
         }
+        
+        _logger?.LogInformation("Secret polling stopped");
     }
 
     private async Task ReloadAsync(CancellationToken cancellationToken)
     {
+        var stopwatch = Stopwatch.StartNew();
         var oldValues = _loadedValues;
 
         var newValues = Options.UseBatchFetch switch
@@ -85,6 +117,15 @@ public class SecretsManagerConfigurationProvider : ConfigurationProvider, IDispo
         {
             _loadedValues = newValues;
             SetData(_loadedValues, triggerReload: true);
+            
+            var addedCount = newValues.Except(oldValues).Count();
+            var removedCount = oldValues.Except(newValues).Count();
+            _logger?.LogInformation("Secret changes detected and reloaded. {AddedCount} added, {RemovedCount} removed, reload took {ElapsedMs}ms",
+                addedCount, removedCount, stopwatch.ElapsedMilliseconds);
+        }
+        else
+        {
+            _logger?.LogTrace("No secret changes detected, reload took {ElapsedMs}ms", stopwatch.ElapsedMilliseconds);
         }
     }
 
