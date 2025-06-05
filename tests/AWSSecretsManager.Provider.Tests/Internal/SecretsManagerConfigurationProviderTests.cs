@@ -6,38 +6,36 @@ using System.Threading.Tasks;
 using Amazon.SecretsManager;
 using Amazon.SecretsManager.Model;
 using AutoFixture;
-using AutoFixture.NUnit3;
+using AutoFixture.Xunit3;
 using AWSSecretsManager.Provider.Internal;
 using AWSSecretsManager.Provider.Tests.Types;
-using Moq;
+using NSubstitute;
 using Newtonsoft.Json;
-using NUnit.Framework;
+using Xunit;
+using AwesomeAssertions;
+using NSubstitute.ExceptionExtensions;
 
 namespace AWSSecretsManager.Provider.Tests.Internal;
 
-[TestFixture]
-[TestOf(typeof(SecretsManagerConfigurationProvider))]
 public class SecretsManagerConfigurationProviderTests
 {
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Simple_values_in_string_can_be_handled([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueResponse,
-        [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut, IFixture fixture)
+        [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name), Is.EqualTo(getSecretValueResponse.SecretString));
+        sut.Get(testEntry.Name).Should().Be(getSecretValueResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Complex_JSON_objects_in_string_can_be_handled([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, RootObject test, [Frozen] IAmazonSecretsManager secretsManager,
         SecretsManagerConfigurationProvider sut, IFixture fixture)
@@ -47,24 +45,22 @@ public class SecretsManagerConfigurationProviderTests
             .Without(p => p.SecretBinary)
             .Create();
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObject.Property)), Is.EqualTo(test.Property));
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Property)),
-            Is.EqualTo(test.Mid.Property));
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Leaf), nameof(Leaf.Property)),
-            Is.EqualTo(test.Mid.Leaf.Property));
+        sut.Get(testEntry.Name, nameof(RootObject.Property)).Should().Be(test.Property);
+        sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Property))
+            .Should().Be(test.Mid.Property);
+        sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Leaf), nameof(Leaf.Property))
+            .Should().Be(test.Mid.Leaf.Property);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Complex_JSON_objects_with_arrays_can_be_handled([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, RootObjectWithArray test,
         [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut, IFixture fixture)
@@ -74,23 +70,21 @@ public class SecretsManagerConfigurationProviderTests
             .Without(p => p.SecretBinary)
             .Create();
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObjectWithArray.Properties), "0"),
-            Is.EqualTo(test.Properties[0]));
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObjectWithArray.Mids), "0", nameof(MidLevel.Property)),
-            Is.EqualTo(test.Mids[0].Property));
+        sut.Get(testEntry.Name, nameof(RootObjectWithArray.Properties), "0")
+            .Should().Be(test.Properties[0]);
+        sut.Get(testEntry.Name, nameof(RootObjectWithArray.Mids), "0", nameof(MidLevel.Property))
+            .Should().Be(test.Mids[0].Property);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Array_Of_Complex_JSON_objects_with_arrays_can_be_handled([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, RootObjectWithArray[] test,
         [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut, IFixture fixture)
@@ -100,27 +94,25 @@ public class SecretsManagerConfigurationProviderTests
             .Without(p => p.SecretBinary)
             .Create();
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name, "0", nameof(RootObjectWithArray.Properties), "0"),
-            Is.EqualTo(test[0].Properties[0]));
-        Assert.That(sut.Get(testEntry.Name, "0", nameof(RootObjectWithArray.Mids), "0", nameof(MidLevel.Property)),
-            Is.EqualTo(test[0].Mids[0].Property));
-        Assert.That(sut.Get(testEntry.Name, "1", nameof(RootObjectWithArray.Properties), "0"),
-            Is.EqualTo(test[1].Properties[0]));
-        Assert.That(sut.Get(testEntry.Name, "1", nameof(RootObjectWithArray.Mids), "0", nameof(MidLevel.Property)),
-            Is.EqualTo(test[1].Mids[0].Property));
+        sut.Get(testEntry.Name, "0", nameof(RootObjectWithArray.Properties), "0")
+            .Should().Be(test[0].Properties[0]);
+        sut.Get(testEntry.Name, "0", nameof(RootObjectWithArray.Mids), "0", nameof(MidLevel.Property))
+            .Should().Be(test[0].Mids[0].Property);
+        sut.Get(testEntry.Name, "1", nameof(RootObjectWithArray.Properties), "0")
+            .Should().Be(test[1].Properties[0]);
+        sut.Get(testEntry.Name, "1", nameof(RootObjectWithArray.Mids), "0", nameof(MidLevel.Property))
+            .Should().Be(test[1].Mids[0].Property);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Values_in_binary_are_ignored([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, [Frozen] IAmazonSecretsManager secretsManager,
         SecretsManagerConfigurationProvider sut, IFixture fixture)
@@ -130,229 +122,211 @@ public class SecretsManagerConfigurationProviderTests
             .Without(p => p.SecretString)
             .Create();
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.HasKey(testEntry.Name), Is.False);
+        sut.HasKey(testEntry.Name).Should().BeFalse();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Secrets_can_be_filtered_out_via_options([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, [Frozen] IAmazonSecretsManager secretsManager,
-        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
-        IFixture fixture)
+        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        options.SecretFilter = entry => false;
+        options.SecretFilter = _ => false;
 
         sut.Load();
 
-        Mock.Get(secretsManager)
-            .Verify(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()),
-                Times.Never);
+        secretsManager.DidNotReceive()
+            .GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>());
 
-        Assert.That(sut.Get(testEntry.Name), Is.Null);
+        sut.Get(testEntry.Name).Should().BeNull();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Secrets_can_be_listed_explicitly_and_not_searched([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueResponse,
         [Frozen] IAmazonSecretsManager secretsManager, [Frozen] SecretsManagerConfigurationProviderOptions options,
-        SecretsManagerConfigurationProvider sut, IFixture fixture)
+        SecretsManagerConfigurationProvider sut)
     {
         const string secretKey = "KEY";
         var firstSecretArn = listSecretsResponse.SecretList.Select(x => x.ARN).First();
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.Is<GetSecretValueRequest>(x => x.SecretId.Equals(firstSecretArn)),
-                It.IsAny<CancellationToken>())).ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Is<GetSecretValueRequest>(x => x.SecretId.Equals(firstSecretArn)),
+                Arg.Any<CancellationToken>()).Returns(Task.FromResult(getSecretValueResponse));
 
-        options.SecretFilter = entry => true;
+        options.SecretFilter = _ => true;
         options.AcceptedSecretArns = new List<string> { firstSecretArn };
-        options.KeyGenerator = (entry, key) => secretKey;
+        options.KeyGenerator = (_, _) => secretKey;
 
         sut.Load();
 
-        Mock.Get(secretsManager)
-            .Verify(
-                p => p.GetSecretValueAsync(It.Is<GetSecretValueRequest>(x => !x.SecretId.Equals(firstSecretArn)),
-                    It.IsAny<CancellationToken>()), Times.Never);
-        Mock.Get(secretsManager)
-            .Verify(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()),
-                Times.Never);
+        secretsManager.DidNotReceive()
+            .GetSecretValueAsync(Arg.Is<GetSecretValueRequest>(x => !x.SecretId.Equals(firstSecretArn)),
+                    Arg.Any<CancellationToken>());
+        secretsManager.DidNotReceive().ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>());
 
-        Assert.That(sut.Get(testEntry.Name), Is.Null);
-        Assert.That(sut.Get(secretKey), Is.EqualTo(getSecretValueResponse.SecretString));
+        sut.Get(testEntry.Name).Should().BeNull();
+        sut.Get(secretKey).Should().Be(getSecretValueResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Secrets_listed_explicitly_and_saved_to_configuration_with_their_names_as_keys(
-        [Frozen] SecretListEntry testEntry, ListSecretsResponse listSecretsResponse,
         GetSecretValueResponse getSecretValueResponse, [Frozen] IAmazonSecretsManager secretsManager,
-        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
-        IFixture fixture)
+        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(
-                It.Is<GetSecretValueRequest>(x => x.SecretId.Equals(getSecretValueResponse.ARN)),
-                It.IsAny<CancellationToken>())).ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(
+                Arg.Is<GetSecretValueRequest>(x => x.SecretId.Equals(getSecretValueResponse.ARN)),
+                Arg.Any<CancellationToken>()).Returns(Task.FromResult(getSecretValueResponse));
 
         options.AcceptedSecretArns = new List<string> { getSecretValueResponse.ARN };
 
-        Assert.DoesNotThrow(sut.Load);
+        var loadAction = () => sut.Load();
+        loadAction.Should().NotThrow();
 
-        Mock.Get(secretsManager)
-            .Verify(
-                p => p.GetSecretValueAsync(
-                    It.Is<GetSecretValueRequest>(x => !x.SecretId.Equals(getSecretValueResponse.ARN)),
-                    It.IsAny<CancellationToken>()), Times.Never);
+        secretsManager.DidNotReceive()
+            .GetSecretValueAsync(
+                    Arg.Is<GetSecretValueRequest>(x => !x.SecretId.Equals(getSecretValueResponse.ARN)),
+                    Arg.Any<CancellationToken>());
 
-        Assert.That(sut.Get(getSecretValueResponse.Name), Is.EqualTo(getSecretValueResponse.SecretString));
+        sut.Get(getSecretValueResponse.Name).Should().Be(getSecretValueResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Secrets_can_be_filtered_out_via_options_on_fetching([Frozen] SecretListEntry testEntry,
-        ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueResponse,
+        GetSecretValueResponse getSecretValueResponse,
         [Frozen] IAmazonSecretsManager secretsManager, [Frozen] SecretsManagerConfigurationProviderOptions options,
-        SecretsManagerConfigurationProvider sut, IFixture fixture)
+        SecretsManagerConfigurationProvider sut)
     {
         options.ListSecretsFilters = new List<Filter>
             { new Filter { Key = FilterNameStringType.Name, Values = new List<string> { testEntry.Name } } };
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(
-                It.Is<ListSecretsRequest>(request => request.Filters == options.ListSecretsFilters),
-                It.IsAny<CancellationToken>())).ReturnsAsync(listSecretsResponse);
+        var listSecretsResponse = new ListSecretsResponse
+        {
+            SecretList = new List<SecretListEntry> { testEntry }
+        };
+
+        secretsManager.ListSecretsAsync(
+                Arg.Is<ListSecretsRequest>(request => request.Filters == options.ListSecretsFilters),
+                Arg.Any<CancellationToken>()).Returns(Task.FromResult(listSecretsResponse));
+
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Mock.Get(secretsManager).Verify(p =>
-            p.ListSecretsAsync(It.Is<ListSecretsRequest>(request => request.Filters == options.ListSecretsFilters),
-                It.IsAny<CancellationToken>()));
+        secretsManager.Received(1)
+            .ListSecretsAsync(Arg.Is<ListSecretsRequest>(request => request.Filters == options.ListSecretsFilters),
+                Arg.Any<CancellationToken>());
 
-        Assert.That(sut.Get(testEntry.Name), Is.Null);
+        sut.Get(testEntry.Name).Should().Be(getSecretValueResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Keys_can_be_customized_via_options([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueResponse, string newKey,
         [Frozen] IAmazonSecretsManager secretsManager, [Frozen] SecretsManagerConfigurationProviderOptions options,
-        SecretsManagerConfigurationProvider sut, IFixture fixture)
+        SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
-        options.KeyGenerator = (entry, key) => newKey;
+        options.KeyGenerator = (_, _) => newKey;
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name), Is.Null);
-        Assert.That(sut.Get(newKey), Is.EqualTo(getSecretValueResponse.SecretString));
+        sut.Get(testEntry.Name).Should().BeNull();
+        sut.Get(newKey).Should().Be(getSecretValueResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
-    [Description("Reproduces issue 32")]
+    [Theory, CustomAutoData]
     public void Keys_should_be_case_insensitive([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueResponse,
-        [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut, IFixture fixture)
+        [Frozen] IAmazonSecretsManager secretsManager, SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name.ToLower()), Is.EqualTo(getSecretValueResponse.SecretString));
-        Assert.That(sut.Get(testEntry.Name.ToUpper()), Is.EqualTo(getSecretValueResponse.SecretString));
+        sut.Get(testEntry.Name.ToLower()).Should().Be(getSecretValueResponse.SecretString);
+        sut.Get(testEntry.Name.ToUpper()).Should().Be(getSecretValueResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Get_secret_value_request_can_be_customized_via_options([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueResponse,
         string secretVersionStage, [Frozen] IAmazonSecretsManager secretsManager,
-        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
-        IFixture fixture)
+        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         options.ConfigureSecretValueRequest = (request, _) => request.VersionStage = secretVersionStage;
 
         sut.Load();
 
-        Mock.Get(secretsManager)
-            .Verify(
-                p => p.GetSecretValueAsync(It.Is<GetSecretValueRequest>(x => x.VersionStage == secretVersionStage),
-                    It.IsAny<CancellationToken>()), Times.Once);
+        secretsManager.Received(1)
+            .GetSecretValueAsync(Arg.Is<GetSecretValueRequest>(x => x.VersionStage == secretVersionStage),
+                    Arg.Any<CancellationToken>());
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Should_throw_on_missing_secret_value([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, [Frozen] IAmazonSecretsManager secretsManager,
-        SecretsManagerConfigurationProvider sut, IFixture fixture)
+        SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
             .Throws(new ResourceNotFoundException("Oops"));
 
-        Assert.That(sut.Load, Throws.TypeOf<MissingSecretValueException>());
+        var loadAction = () => sut.Load();
+        loadAction.Should().Throw<MissingSecretValueException>();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Should_skip_on_missing_secret_value_if_configured([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, [Frozen] IAmazonSecretsManager secretsManager,
-        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
-        IFixture fixture)
+        [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
             .Throws(new ResourceNotFoundException("Oops"));
 
         options.IgnoreMissingValues = true;
 
-        Assert.That(sut.Load, Throws.Nothing);
+        var loadAction = () => sut.Load();
+        loadAction.Should().NotThrow();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Should_throw_on_batch_missing_secret_values([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, [Frozen] IAmazonSecretsManager secretsManager,
         [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
         IFixture fixture)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
         var batchGetSecretValueResponse = fixture.Build<BatchGetSecretValueResponse>()
             .With(p => p.SecretValues)
@@ -361,24 +335,23 @@ public class SecretsManagerConfigurationProviderTests
             .Without(p => p.NextToken)
             .Create();
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.BatchGetSecretValueAsync(It.IsAny<BatchGetSecretValueRequest>(),
-                It.IsAny<CancellationToken>())).ReturnsAsync(batchGetSecretValueResponse);
+        secretsManager.BatchGetSecretValueAsync(Arg.Any<BatchGetSecretValueRequest>(),
+                Arg.Any<CancellationToken>()).Returns(Task.FromResult(batchGetSecretValueResponse));
 
         options.UseBatchFetch = true;
 
-        Assert.That(sut.Load, Throws.TypeOf<AggregateException>());
+        var loadAction = () => sut.Load();
+        loadAction.Should().Throw<AggregateException>();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Should_skip_on_missing_batch_secret_values_if_configured([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, [Frozen] IAmazonSecretsManager secretsManager,
         [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
         IFixture fixture)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
         var batchGetSecretValueResponse = fixture.Build<BatchGetSecretValueResponse>()
             .With(p => p.SecretValues)
@@ -387,75 +360,67 @@ public class SecretsManagerConfigurationProviderTests
             .Without(p => p.NextToken)
             .Create();
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.BatchGetSecretValueAsync(It.IsAny<BatchGetSecretValueRequest>(),
-                It.IsAny<CancellationToken>())).ReturnsAsync(batchGetSecretValueResponse);
+        secretsManager.BatchGetSecretValueAsync(Arg.Any<BatchGetSecretValueRequest>(),
+                Arg.Any<CancellationToken>()).Returns(Task.FromResult(batchGetSecretValueResponse));
 
         options.UseBatchFetch = true;
         options.IgnoreMissingValues = true;
 
-        Assert.That(sut.Load, Throws.Nothing);
+        var loadAction = () => sut.Load();
+        loadAction.Should().NotThrow();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Should_poll_and_reload_when_secrets_changed([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueInitialResponse,
         GetSecretValueResponse getSecretValueUpdatedResponse, [Frozen] IAmazonSecretsManager secretsManager,
         [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
-        IFixture fixture, Action<object> changeCallback, object changeCallbackState)
+        Action<object> changeCallback, object changeCallbackState)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager).SetupSequence(p =>
-                p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueInitialResponse)
-            .ReturnsAsync(getSecretValueUpdatedResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueInitialResponse), Task.FromResult(getSecretValueUpdatedResponse));
 
         options.PollingInterval = TimeSpan.FromMilliseconds(100);
 
         sut.GetReloadToken().RegisterChangeCallback(changeCallback, changeCallbackState);
 
         sut.Load();
-        Assert.That(sut.Get(testEntry.Name), Is.EqualTo(getSecretValueInitialResponse.SecretString));
+        sut.Get(testEntry.Name).Should().Be(getSecretValueInitialResponse.SecretString);
 
         Thread.Sleep(200);
 
-        Mock.Get(changeCallback).Verify(c => c(changeCallbackState));
-        Assert.That(sut.Get(testEntry.Name), Is.EqualTo(getSecretValueUpdatedResponse.SecretString));
+        changeCallback.Received(1)(changeCallbackState);
+        sut.Get(testEntry.Name).Should().Be(getSecretValueUpdatedResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public async Task Should_reload_when_forceReload_called([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, GetSecretValueResponse getSecretValueInitialResponse,
         GetSecretValueResponse getSecretValueUpdatedResponse, [Frozen] IAmazonSecretsManager secretsManager,
         [Frozen] SecretsManagerConfigurationProviderOptions options, SecretsManagerConfigurationProvider sut,
-        IFixture fixture, Action<object> changeCallback, object changeCallbackState)
+        Action<object> changeCallback, object changeCallbackState)
     {
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager).SetupSequence(p =>
-                p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueInitialResponse)
-            .ReturnsAsync(getSecretValueUpdatedResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueInitialResponse), Task.FromResult(getSecretValueUpdatedResponse));
 
         sut.GetReloadToken().RegisterChangeCallback(changeCallback, changeCallbackState);
 
         sut.Load();
-        Assert.That(sut.Get(testEntry.Name), Is.EqualTo(getSecretValueInitialResponse.SecretString));
-
+        sut.Get(testEntry.Name).Should().Be(getSecretValueInitialResponse.SecretString);
 
         await sut.ForceReloadAsync(CancellationToken.None);
 
-        Mock.Get(changeCallback).Verify(c => c(changeCallbackState));
-        Assert.That(sut.Get(testEntry.Name), Is.EqualTo(getSecretValueUpdatedResponse.SecretString));
+        changeCallback.Received(1)(changeCallbackState);
+        sut.Get(testEntry.Name).Should().Be(getSecretValueUpdatedResponse.SecretString);
     }
 
-    [Test]
-    [Description("Reproduces issue 48")]
+    [Theory]
     [CustomInlineAutoData("{THIS IS NOT AN OBJECT}")]
     [CustomInlineAutoData("[THIS IS NOT AN ARRAY]")]
     public void Incorrect_json_should_be_processed_as_string(string content, [Frozen] SecretListEntry testEntry,
@@ -464,20 +429,18 @@ public class SecretsManagerConfigurationProviderTests
     {
         getSecretValueResponse.SecretString = content;
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name), Is.EqualTo(getSecretValueResponse.SecretString));
+        sut.Get(testEntry.Name).Should().Be(getSecretValueResponse.SecretString);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void JSON_with_leading_spaces_should_be_processed_as_JSON([Frozen] SecretListEntry testEntry,
         ListSecretsResponse listSecretsResponse, RootObject test, [Frozen] IAmazonSecretsManager secretsManager,
         SecretsManagerConfigurationProvider sut, IFixture fixture)
@@ -489,20 +452,18 @@ public class SecretsManagerConfigurationProviderTests
             .Without(p => p.SecretBinary)
             .Create();
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.ListSecretsAsync(It.IsAny<ListSecretsRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(listSecretsResponse);
+        secretsManager.ListSecretsAsync(Arg.Any<ListSecretsRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(listSecretsResponse));
 
-        Mock.Get(secretsManager)
-            .Setup(p => p.GetSecretValueAsync(It.IsAny<GetSecretValueRequest>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(getSecretValueResponse);
+        secretsManager.GetSecretValueAsync(Arg.Any<GetSecretValueRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(getSecretValueResponse));
 
         sut.Load();
 
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObject.Property)), Is.EqualTo(test.Property));
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Property)),
-            Is.EqualTo(test.Mid.Property));
-        Assert.That(sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Leaf), nameof(Leaf.Property)),
-            Is.EqualTo(test.Mid.Leaf.Property));
+        sut.Get(testEntry.Name, nameof(RootObject.Property)).Should().Be(test.Property);
+        sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Property))
+            .Should().Be(test.Mid.Property);
+        sut.Get(testEntry.Name, nameof(RootObject.Mid), nameof(MidLevel.Leaf), nameof(Leaf.Property))
+            .Should().Be(test.Mid.Leaf.Property);
     }
 }

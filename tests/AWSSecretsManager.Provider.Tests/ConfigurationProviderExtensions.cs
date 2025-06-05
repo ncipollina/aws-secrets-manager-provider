@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
-using NUnit.Framework;
+using Xunit;
+using AwesomeAssertions;
 
 namespace AWSSecretsManager.Provider.Tests;
 
@@ -25,51 +26,49 @@ public static class ConfigurationProviderExtensions
     }
 }
 
-[TestFixture]
-[TestOf(typeof(ConfigurationProviderExtensions))]
 public class ConfigurationProviderExtensionsTests
 {
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Added_keys_are_found(ConfigurationProvider provider, string key, string value)
     {
         provider.Set(key, value);
 
-        Assert.That(ConfigurationProviderExtensions.HasKey(provider, key), Is.True);
+        ConfigurationProviderExtensions.HasKey(provider, key).Should().BeTrue();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Added_nested_keys_are_found(ConfigurationProvider provider, string firstKey, string secondKey, string value)
     {
         provider.Set($"{firstKey}{ConfigurationPath.KeyDelimiter}{secondKey}", value);
 
-        Assert.That(ConfigurationProviderExtensions.HasKey(provider, firstKey, secondKey), Is.True);
+        ConfigurationProviderExtensions.HasKey(provider, firstKey, secondKey).Should().BeTrue();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Non_added_keys_are_not_found(ConfigurationProvider provider, string key)
     {
-        Assert.That(ConfigurationProviderExtensions.HasKey(provider, key), Is.False);
+        ConfigurationProviderExtensions.HasKey(provider, key).Should().BeFalse();
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Values_can_be_retrieved(ConfigurationProvider provider, string key, string value)
     {
         provider.Set(key, value);
 
-        Assert.That(ConfigurationProviderExtensions.Get(provider, key), Is.EqualTo(value));
+        ConfigurationProviderExtensions.Get(provider, key).Should().Be(value);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Values_of_nested_keys_can_be_retrieved(ConfigurationProvider provider, string firstKey, string secondKey, string value)
     {
         provider.Set($"{firstKey}{ConfigurationPath.KeyDelimiter}{secondKey}", value);
 
-        Assert.That(ConfigurationProviderExtensions.Get(provider, firstKey, secondKey), Is.EqualTo(value));
+        ConfigurationProviderExtensions.Get(provider, firstKey, secondKey).Should().Be(value);
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void Non_added_keys_return_null(ConfigurationProvider provider, string key)
     {
-        Assert.That(ConfigurationProviderExtensions.Get(provider, key), Is.Null);
+        ConfigurationProviderExtensions.Get(provider, key).Should().BeNull();
     }
 }

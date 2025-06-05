@@ -4,9 +4,11 @@ using System.IO;
 using System.Text;
 using Amazon.SecretsManager.Model;
 using AutoFixture;
-using AutoFixture.AutoMoq;
-using AutoFixture.NUnit3;
+using AutoFixture.AutoNSubstitute;
+using AutoFixture.Kernel;
+using AutoFixture.Xunit3;
 using AWSSecretsManager.Provider.Internal;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace AWSSecretsManager.Provider.Tests;
@@ -27,13 +29,37 @@ public class CustomInlineAutoDataAttribute : InlineAutoDataAttribute
     }
 }
 
+public class ConfigurationProviderSpecimenBuilder : ISpecimenBuilder
+{
+    public object Create(object request, ISpecimenContext context)
+    {
+        if (request is Type type && type == typeof(ConfigurationProvider))
+        {
+            return new TestConfigurationProvider();
+        }
+        
+        return new NoSpecimen();
+    }
+}
+
+public class TestConfigurationProvider : ConfigurationProvider
+{
+    public override void Set(string key, string value)
+    {
+        Data[key] = value;
+    }
+}
+
 public static class FixtureHelpers
 {
     public static IFixture CreateFixture()
     {
         IFixture fixture = new Fixture();
 
-        fixture.Customize(new AutoMoqCustomization
+        // Add custom specimen builder for ConfigurationProvider before AutoNSubstitute
+        fixture.Customizations.Add(new ConfigurationProviderSpecimenBuilder());
+
+        fixture.Customize(new AutoNSubstituteCustomization
         {
             GenerateDelegates = true
         });

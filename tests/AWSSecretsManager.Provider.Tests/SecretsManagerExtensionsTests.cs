@@ -3,73 +3,70 @@ using Amazon;
 using Amazon.Runtime;
 using AWSSecretsManager.Provider.Internal;
 using Microsoft.Extensions.Configuration;
-using Moq;
-using NUnit.Framework;
+using NSubstitute;
+using Xunit;
+using AwesomeAssertions;
 
 namespace AWSSecretsManager.Provider.Tests;
 
-[TestFixture]
-[TestOf(typeof(SecretsManagerExtensions))]
 public class SecretsManagerExtensionsTests
 {
-    private Mock<IConfigurationBuilder> configurationBuilder;
+    private readonly IConfigurationBuilder configurationBuilder;
 
-    [SetUp]
-    public void Initialize()
+    public SecretsManagerExtensionsTests()
     {
-        configurationBuilder = new Mock<IConfigurationBuilder>();
+        configurationBuilder = Substitute.For<IConfigurationBuilder>();
     }
 
-    [Test]
+    [Fact]
     public void SecretsManagerConfigurationSource_can_be_added_via_convenience_method_with_no_parameters()
     {
-        configurationBuilder.Setup(m => m.Add(It.IsAny<IConfigurationSource>()));
+        configurationBuilder.Add(Arg.Any<IConfigurationSource>()).Returns(configurationBuilder);
 
-        SecretsManagerExtensions.AddSecretsManager(configurationBuilder.Object);
+        SecretsManagerExtensions.AddSecretsManager(configurationBuilder);
 
-        configurationBuilder.Verify(m => m.Add(It.IsAny<SecretsManagerConfigurationSource>()));
+        configurationBuilder.Received(1).Add(Arg.Any<SecretsManagerConfigurationSource>());
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void SecretsManagerConfigurationSource_can_be_added_via_convenience_method_with_region(RegionEndpoint region)
     {
-        configurationBuilder.Setup(m => m.Add(It.IsAny<IConfigurationSource>()));
+        configurationBuilder.Add(Arg.Any<IConfigurationSource>()).Returns(configurationBuilder);
 
-        SecretsManagerExtensions.AddSecretsManager(configurationBuilder.Object, region: region);
+        SecretsManagerExtensions.AddSecretsManager(configurationBuilder, region: region);
 
-        configurationBuilder.Verify(m => m.Add(It.Is<SecretsManagerConfigurationSource>(s => s.Region == region)));
+        configurationBuilder.Received(1).Add(Arg.Is<SecretsManagerConfigurationSource>(s => s.Region == region));
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void SecretsManagerConfigurationSource_can_be_added_via_convenience_method_with_optionConfigurator(Action<SecretsManagerConfigurationProviderOptions> optionConfigurator)
     {
-        configurationBuilder.Setup(m => m.Add(It.IsAny<IConfigurationSource>()));
+        configurationBuilder.Add(Arg.Any<IConfigurationSource>()).Returns(configurationBuilder);
 
-        SecretsManagerExtensions.AddSecretsManager(configurationBuilder.Object, configurator: optionConfigurator);
+        SecretsManagerExtensions.AddSecretsManager(configurationBuilder, configurator: optionConfigurator);
 
-        configurationBuilder.Verify(m => m.Add(It.IsAny<SecretsManagerConfigurationSource>()));
+        configurationBuilder.Received(1).Add(Arg.Any<SecretsManagerConfigurationSource>());
 
-        Mock.Get(optionConfigurator).Verify(p => p(It.IsAny<SecretsManagerConfigurationProviderOptions>()), Times.Once);
+        optionConfigurator.Received(1)(Arg.Any<SecretsManagerConfigurationProviderOptions>());
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void SecretsManagerConfigurationSource_can_be_added_via_convenience_method_with_credentials(AWSCredentials credentials)
     {
-        configurationBuilder.Setup(m => m.Add(It.IsAny<IConfigurationSource>()));
+        configurationBuilder.Add(Arg.Any<IConfigurationSource>()).Returns(configurationBuilder);
 
-        SecretsManagerExtensions.AddSecretsManager(configurationBuilder.Object, credentials);
+        SecretsManagerExtensions.AddSecretsManager(configurationBuilder, credentials);
 
-        configurationBuilder.Verify(m => m.Add(It.IsAny<SecretsManagerConfigurationSource>()));
+        configurationBuilder.Received(1).Add(Arg.Any<SecretsManagerConfigurationSource>());
     }
 
-    [Test, CustomAutoData]
+    [Theory, CustomAutoData]
     public void SecretsManagerConfigurationSource_can_be_added_via_convenience_method_with_credentials_and_region(AWSCredentials credentials, RegionEndpoint region)
     {
-        configurationBuilder.Setup(m => m.Add(It.IsAny<IConfigurationSource>()));
+        configurationBuilder.Add(Arg.Any<IConfigurationSource>()).Returns(configurationBuilder);
 
-        SecretsManagerExtensions.AddSecretsManager(configurationBuilder.Object, credentials, region);
+        SecretsManagerExtensions.AddSecretsManager(configurationBuilder, credentials, region);
 
-        configurationBuilder.Verify(m => m.Add(It.Is<SecretsManagerConfigurationSource>(s => s.Region == region)));
+        configurationBuilder.Received(1).Add(Arg.Is<SecretsManagerConfigurationSource>(s => s.Region == region));
     }
-
 }
